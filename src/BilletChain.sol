@@ -3,13 +3,14 @@ pragma solidity 0.8.24;
 
 import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol";
 
 /// @title BilletChain
 /// @notice Billetterie sur blockchain : chaque billet est un NFT unique, vendu à un
 ///         prix affiché en euros mais payé en monnaie native via un oracle Chainlink.
 ///         Le contrat est aussi la place de marché pour la revente plafonnée.
-contract BilletChain is ERC721, Ownable {
+contract BilletChain is ERC721, Ownable, ReentrancyGuard {
     uint256 public constant RESALE_CAP_PERCENT = 110; // plafond de revente
 
     uint256 public immutable maxTickets;
@@ -32,6 +33,7 @@ contract BilletChain is ERC721, Ownable {
     event TicketListed(uint256 indexed tokenId, address indexed seller, uint256 priceWei);
     event ListingCancelled(uint256 indexed tokenId, address indexed seller);
     event TicketResold(uint256 indexed tokenId, address indexed seller, address indexed buyer, uint256 priceWei);
+    event Withdrawn(address indexed account, uint256 amount);
 
     error SoldOut();
     error IncorrectPayment(uint256 expected, uint256 sent);
@@ -42,6 +44,8 @@ contract BilletChain is ERC721, Ownable {
     error PriceAboveCap(uint256 cap, uint256 asked);
     error NotApprovedForResale();
     error NotListed();
+    error NothingToWithdraw();
+    error WithdrawFailed();
 
     constructor(
         string memory name_,
@@ -113,7 +117,7 @@ contract BilletChain is ERC721, Ownable {
     }
 
     /// @notice Achète un billet mis en vente au montant exact demandé.
-    function buyResale(uint256 tokenId) external payable {
+    function buyResale(uint256 tokenId) external payable nonReentrant {
         uint256 price = listingPrice[tokenId];
         if (price == 0) revert NotListed();
         if (msg.value != price) revert IncorrectPayment(price, msg.value);
@@ -128,6 +132,18 @@ contract BilletChain is ERC721, Ownable {
         _safeTransfer(seller, msg.sender, tokenId); // _update efface le listing
 
         emit TicketResold(tokenId, seller, msg.sender, price);
+    }
+
+    /// @notice Retire les sommes dues à l'appelant (pull-payment).
+    function withdraw() external nonReentrant {
+        uint256 amount = proceeds[msg.sender];
+        if (amount == 0) revert NothingToWithdraw();
+
+        proceeds[msg.sender] = 0; // effet avant interaction
+        (bool ok,) = msg.sender.call{value: amount}("");
+        if (!ok) revert WithdrawFailed();
+
+        emit Withdrawn(msg.sender, amount);
     }
 
     function totalMinted() external view returns (uint256) {
