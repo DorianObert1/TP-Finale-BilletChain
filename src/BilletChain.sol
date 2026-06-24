@@ -146,6 +146,21 @@ contract BilletChain is ERC721, Ownable, ReentrancyGuard {
         emit Withdrawn(msg.sender, amount);
     }
 
+    /// @notice Compte, parmi les billets fournis, combien sont actuellement en vente.
+    function countListed(uint256[] calldata tokenIds) external view returns (uint256 count) {
+        uint256 length = tokenIds.length;
+        for (uint256 i; i < length;) {
+            if (listingPrice[tokenIds[i]] != 0) {
+                unchecked {
+                    ++count;
+                }
+            }
+            unchecked {
+                ++i;
+            }
+        }
+    }
+
     function totalMinted() external view returns (uint256) {
         return _nextTokenId;
     }
