@@ -99,11 +99,18 @@ contract SecondaryMarketTest is BaseTest {
         billet.buyResale{value: price}(0);
     }
 
-    function test_BuyResale_RevertIf_IncorrectPayment() public {
+    function test_BuyResale_RevertIf_Underpaid() public {
         _aliceLists(0, price);
         vm.prank(bob);
         vm.expectRevert(abi.encodeWithSelector(BilletChain.IncorrectPayment.selector, price, price - 1));
         billet.buyResale{value: price - 1}(0);
+    }
+
+    function test_BuyResale_RevertIf_Overpaid() public {
+        _aliceLists(0, price);
+        vm.prank(bob);
+        vm.expectRevert(abi.encodeWithSelector(BilletChain.IncorrectPayment.selector, price, price + 1));
+        billet.buyResale{value: price + 1}(0);
     }
 
     function test_BuyResale_RevertIf_ApprovalRevoked() public {

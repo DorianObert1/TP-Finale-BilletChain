@@ -17,7 +17,7 @@ Projet réalisé dans le cadre de l'évaluation finale (voir `Evaluation_BilletC
 - **Solidity** `0.8.24`
 - **Foundry** (forge / cast / anvil) pour le build et les tests
 - **OpenZeppelin Contracts** : `ERC721`, `Ownable`, `ReentrancyGuard`
-- **Chainlink** : `AggregatorV3Interface` pour le taux de change EUR → natif
+- **Chainlink** : `AggregatorV3Interface` pour le taux de change euro vers monnaie native
 
 ## Organisation du dépôt
 
@@ -26,7 +26,7 @@ src/        contrats Solidity
 test/       suite de tests Foundry (+ mock d'oracle)
 script/     scripts de déploiement
 lib/        dépendances (forge-std, OpenZeppelin, Chainlink)
-docs/       partie théorique (Q1→Q5) et note de déploiement
+docs/       partie théorique (Q1 à Q5) et note de déploiement
 ```
 
 ## Commandes utiles
@@ -37,6 +37,18 @@ forge test          # exécution des tests
 forge test -vvv     # tests avec traces détaillées
 forge fmt           # formatage
 ```
+
+## Bonus implémentés
+
+Trois des quatre bonus du sujet sont inclus :
+- Frais de plateforme sur chaque revente (paramétrable, plafonné à 10 %).
+- Mise en pause d'urgence avec `Pausable` : l'organisateur peut geler les ventes, le retrait
+  des fonds reste possible.
+- Fuzzing : `testFuzz_ListNeverAboveCap` montre qu'aucune mise en vente ne peut dépasser le
+  plafond, quelle que soit l'entrée.
+
+Je n'ai pas pris le bonus "remboursement du trop-perçu" parce qu'il irait à l'encontre de
+l'exigence du paiement au montant exact (sections 2.1 et 2.2).
 
 ## Dépendances
 

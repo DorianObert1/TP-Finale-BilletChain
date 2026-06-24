@@ -19,6 +19,7 @@ abstract contract BaseTest is Test {
     uint8 internal constant ORACLE_DECIMALS = 8;
     int256 internal constant ETH_PRICE_EUR = 2000e8; // 1 ETH = 2000 €
     uint256 internal constant MAX_PRICE_AGE = 1 hours;
+    uint256 internal constant PLATFORM_FEE_BPS = 0; // pas de frais par défaut
 
     function setUp() public virtual {
         // On part d'un timestamp réaliste pour pouvoir tester la péremption.
@@ -27,7 +28,9 @@ abstract contract BaseTest is Test {
         oracle = new MockV3Aggregator(ORACLE_DECIMALS, ETH_PRICE_EUR, block.timestamp);
 
         vm.prank(organizer);
-        billet = new BilletChain("BilletChain", "BLT", MAX_TICKETS, NOMINAL_PRICE_EUR, address(oracle), MAX_PRICE_AGE);
+        billet = new BilletChain(
+            "BilletChain", "BLT", MAX_TICKETS, NOMINAL_PRICE_EUR, address(oracle), MAX_PRICE_AGE, PLATFORM_FEE_BPS
+        );
 
         vm.deal(alice, 100 ether);
         vm.deal(bob, 100 ether);
